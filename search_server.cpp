@@ -1,4 +1,3 @@
-#pragma once
 #include  <cmath>
 #include <utility>
 
@@ -9,36 +8,47 @@
 
 
 
+
 SearchServer::SearchServer(const std::string& stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text))  
     { }
-void SearchServer::AddDocument(int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings)
-{
-        if ((document_id < 0) || (documents_.count(document_id) > 0))
-        {
-            throw std::invalid_argument("Invalid document_id"s);
-        }
-        const auto words = SplitIntoWordsNoStop(document);
 
-        const double inv_word_count = 1.0 / words.size();
-        for (const std::string& word : words)
-        {
-            word_to_document_freqs_[word][document_id] += inv_word_count;
-        }
-        documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
-        document_ids_.push_back(document_id);
+void  SearchServer::AddDocument(int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings) {
+    if ((document_id < 0) || (documents_.count(document_id) > 0)) {
+        throw std::invalid_argument("Invalid document_id"s);
+    }
+    const auto words = SplitIntoWordsNoStop(document);
+
+    const double inv_word_count = 1.0 / words.size();
+    for (const std::string& word : words)
+    {
+        word_to_document_freqs_[word][document_id] += inv_word_count;
+    }
+    documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
+    document_ids_.push_back(document_id);
+
+    std::map<std::string, double>temp;
+    double result(0.0);
+   
+    for (const std::string& word : words)
+    {
+        double counts = count(words.begin(), words.end(), word);
+        result = counts / static_cast<double>(words.size());
+        temp.emplace(word, result);
+    }
+    id_document_.emplace(document_id, temp);
 }
 
 std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentStatus status) const
-{
+{    
         return FindTopDocuments(raw_query, [status](int document_id, DocumentStatus document_status, int rating)
-            {
-                return document_status == status;
-            });
+        {
+            return document_status == status;
+        });
 }
 
 std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query) const
-{
+{   
         return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
 }
 
@@ -47,13 +57,18 @@ int SearchServer::GetDocumentCount() const
         return documents_.size();
 }
 
-int SearchServer::GetDocumentId(int index) const
+const std::vector<int>::const_iterator  SearchServer::begin() const
 {
-        return document_ids_.at(index);
+    return  document_ids_.begin();
+}
+
+const std::vector<int>::const_iterator  SearchServer::end() const
+{
+    return  document_ids_.end();
 }
 
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(const std::string& raw_query, int document_id) const
-{
+{    
         const auto query = ParseQuery(raw_query);
 
         std::vector<std::string> matched_words;
@@ -90,8 +105,7 @@ bool SearchServer::IsStopWord(const std::string& word) const
 }
 
 bool SearchServer::IsValidWord(const std::string& word)
-{
-        // A valid word must not contain special characters
+{        
         return none_of(word.begin(), word.end(), [](char c)
             {
                 return c >= '\0' && c < ' ';
@@ -178,3 +192,42 @@ double SearchServer::ComputeWordInverseDocumentFreq(const std::string& word) con
 }
 
     
+const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const
+{
+    const auto it = id_document_.find(document_id);
+
+    if (it == id_document_.end())
+    {
+        const auto it1 = id_document_.begin();
+        return it1->second;
+    }
+    return it->second;
+}
+
+
+void SearchServer::RemoveDocument(int document_id)
+{
+    if (documents_.count(document_id))
+    {
+        for (size_t i = 0; i < document_ids_.size(); ++i)
+        {
+            auto it = find(document_ids_.begin(), document_ids_.end(), document_id);
+            if (it != document_ids_.end())
+            {
+                document_ids_.erase(it);
+            }
+        }
+
+        const auto it = documents_.find(document_id);
+        if (it != documents_.end())
+        {
+            documents_.erase(it);
+        }
+
+        const auto it1 = id_document_.find(document_id);
+        if (it1 != id_document_.end())
+        {
+            id_document_.erase(it1);
+        }
+    }
+}
