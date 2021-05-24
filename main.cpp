@@ -10,14 +10,14 @@
 int main() {
 
     setlocale(LC_ALL, "Russian");
-    TestSearchServer();
-    std::cout << "Search server testing finished"s << std::endl; 
+    /*TestSearchServer();
+    std::cout << "Search server testing finished"s << std::endl; */
 
     SearchServer search_server("and with"s);
   
     AddDocument(search_server, 1, "funny pet and nasty rat"s, DocumentStatus::ACTUAL, { 7, 2, 7 });
     AddDocument(search_server, 2, "funny pet with curly hair"s, DocumentStatus::ACTUAL, { 1, 2 });    
-    AddDocument(search_server, 3, "funny pet with curly hair"s, DocumentStatus::ACTUAL, { 1, 2 });
+    AddDocument(search_server, 3, "funny pet with curly hair rat"s, DocumentStatus::ACTUAL, { 1, 2 });
     AddDocument(search_server, 4, "funny pet and curly hair"s, DocumentStatus::ACTUAL, { 1, 2 });   
     AddDocument(search_server, 5, "funny funny pet and nasty nasty rat"s, DocumentStatus::ACTUAL, { 1, 2 });   
     AddDocument(search_server, 6, "funny pet and not very nasty rat"s, DocumentStatus::ACTUAL, { 1, 2 });   
@@ -28,7 +28,7 @@ int main() {
 
     std::cout << "Before duplicates removed: "s << search_server.GetDocumentCount() << std::endl;
     RemoveDuplicates(search_server);
-    search_server.RemoveDocument(10);
+    
     std::cout << "After duplicates removed: "s << search_server.GetDocumentCount() << std::endl;
 
     return 0;

@@ -5,7 +5,7 @@
 
 void RemoveDuplicates(SearchServer& search_server)
 {
-    std::vector<std::set<std::string>> dec { {} };
+    std::set<std::set<std::string>> dec { {} };
     std::set<std::string> s_temp1, s_temp2;
     std::set<int> v_temp;
     for (const int document_id : search_server)
@@ -23,7 +23,7 @@ void RemoveDuplicates(SearchServer& search_server)
             v_temp.emplace(document_id);
         }
 
-        std::vector<std::set<std::string>> dec1 = dec;
+        std::set<std::set<std::string>> dec1 = dec;
         for (const auto& temp : dec1)
         {
             if (temp == s_temp2)
@@ -32,7 +32,7 @@ void RemoveDuplicates(SearchServer& search_server)
             }
             else
             {
-                dec.push_back(s_temp2);
+                dec.emplace(s_temp2);
                 s_temp1 = s_temp2;
             }
         }
